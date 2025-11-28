@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google'
 import "./globals.css"
 import Header from "@/components/Header"
 import Sidebar from "@/components/Sidebar"
+import VoiceAssistant from "@/components/VoiceAssistant"
 import 'leaflet/dist/leaflet.css'
 import { Toaster } from 'react-hot-toast'
 import { Providers } from "@/components/providers"
@@ -25,6 +26,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      {/* Voice AI Assistant - Floating Button */}
+      <VoiceAssistant />
     </div>
   );
 }

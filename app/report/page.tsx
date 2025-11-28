@@ -74,7 +74,7 @@ export default function ReportPage() {
     
     try {
       const genAI = new GoogleGenerativeAI(geminiApiKey!);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const base64Data = await readFileAsBase64(file);
 
@@ -207,7 +207,15 @@ export default function ReportPage() {
         setVerificationStatus('idle');
         setVerificationResult(null);
         
-        toast.success(`Report submitted successfully! You've earned points for reporting waste.`);
+        // Calculate carbon offset from waste
+        const wasteMatch = newReport.amount.match(/(\d+(\.\d+)?)/);
+        const wasteAmount = wasteMatch ? parseFloat(wasteMatch[0]) : 0;
+        const carbonOffset = Math.round(wasteAmount * 500); // 500g CO2 per kg of waste
+        
+        toast.success(
+          `Eco action logged! You've earned points and offset ${carbonOffset}g CO₂ by reporting waste.`,
+          { duration: 5000 }
+        );
       } else {
         toast.error('Failed to create report. Please try again.');
       }
@@ -255,7 +263,8 @@ export default function ReportPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-semibold mb-6 text-gray-800 dark:text-gray-200">Report waste</h1>
+      <h1 className="text-3xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Log Eco Action</h1>
+      <p className="text-gray-600 dark:text-gray-400 mb-6">Report waste to help your community and offset your carbon footprint!</p>
       
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg mb-12">
         <div className="mb-8">
@@ -375,7 +384,18 @@ export default function ReportPage() {
         </Button>
       </form>
 
-      <h2 className="text-3xl font-semibold mb-6 text-gray-800 dark:text-gray-200">Recent Reports</h2>
+      {/* Carbon Offset Info Box */}
+      <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-2xl border-2 border-green-200 dark:border-green-700 mb-8">
+        <h3 className="text-lg font-semibold text-green-900 dark:text-green-200 mb-2">
+          🌱 How Waste Reporting Helps Reduce Carbon
+        </h3>
+        <p className="text-sm text-green-800 dark:text-green-300">
+          Every kilogram of waste you report and help divert from landfills prevents approximately <strong>0.5 kg of CO₂</strong> from entering the atmosphere. 
+          When waste is properly collected and recycled, it reduces methane emissions from decomposition and saves energy compared to producing new materials.
+        </p>
+      </div>
+
+      <h2 className="text-3xl font-semibold mb-6 text-gray-800 dark:text-gray-200">Recent Eco Actions</h2>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
         <div className="max-h-96 overflow-y-auto">
           <table className="w-full">

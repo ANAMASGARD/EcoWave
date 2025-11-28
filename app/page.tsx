@@ -81,51 +81,61 @@ export default function Home() {
       <section className="text-center mb-20">
         <AnimatedGlobe />
         <h1 className="text-6xl font-bold mb-6 text-gray-800 dark:text-gray-200 tracking-tight">
-          CleanShare   <span className="text-green-600 dark:text-green-400">Waste Management</span>
+          <span className="text-green-600 dark:text-green-400">Snap. Track. Reduce.</span>
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed mb-8">
-          Join our community in making waste management more efficient and rewarding!
+        <p className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+          Your Simple Carbon Footprint Tracker
+        </p>
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-8">
+          Take a photo of your receipts, let AI calculate your carbon footprint, and get personalized tips to reduce your environmental impact.
         </p>
         {!loggedIn ? (
           <Button onClick={login} className="bg-green-600 hover:bg-green-700 text-white text-lg py-6 px-10 rounded-full font-medium transition-all duration-300 ease-in-out transform hover:scale-105">
-            Get Started
+            Get Started Free
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         ) : (
-          <Link href="/report">
-            <Button className="bg-green-600 hover:bg-green-700 text-white text-lg py-6 px-10 rounded-full font-medium transition-all duration-300 ease-in-out transform hover:scale-105">
-              Report Waste
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="flex gap-4 justify-center">
+            <Link href="/scan">
+              <Button className="bg-green-600 hover:bg-green-700 text-white text-lg py-6 px-10 rounded-full font-medium transition-all duration-300 ease-in-out transform hover:scale-105">
+                📸 Scan Receipt
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/carbon">
+              <Button variant="outline" className="border-2 border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 text-lg py-6 px-10 rounded-full font-medium transition-all duration-300">
+                Manual Log
+              </Button>
+            </Link>
+          </div>
         )}
       </section>
       
       <section className="grid md:grid-cols-3 gap-10 mb-20">
         <FeatureCard
-          icon={Leaf}
-          title="Eco-Friendly"
-          description="Contribute to a cleaner environment by reporting and collecting waste."
+          icon={Recycle}
+          title="📸 Snap Your Receipts"
+          description="Take a quick photo of shopping receipts. AI automatically identifies items and calculates their carbon footprint in seconds."
         />
         <FeatureCard
-          icon={Coins}
-          title="Earn Rewards"
-          description="Get tokens for your contributions to waste management efforts."
+          icon={Leaf}
+          title="🤖 AI-Powered Insights"
+          description="Get personalized tips and alternative suggestions to reduce your carbon impact. Learn what choices make the biggest difference."
         />
         <FeatureCard
           icon={Users}
-          title="Community-Driven"
-          description="Be part of a growing community committed to sustainable practices."
+          title="🏆 Campus Competition"
+          description="Join your dorm or department team. Compete on leaderboards and see how your group ranks in carbon reduction."
         />
       </section>
       
       <section className="bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-lg mb-20">
-        <h2 className="text-4xl font-bold mb-12 text-center text-gray-800 dark:text-gray-200">Our Impact</h2>
+        <h2 className="text-4xl font-bold mb-12 text-center text-gray-800 dark:text-gray-200">Community Impact</h2>
         <div className="grid md:grid-cols-4 gap-6">
-          <ImpactCard title="Waste Collected" value={`${impactData.wasteCollected} kg`} icon={Recycle} />
-          <ImpactCard title="Reports Submitted" value={impactData.reportsSubmitted.toString()} icon={MapPin} />
-          <ImpactCard title="Tokens Earned" value={impactData.tokensEarned.toString()} icon={Coins} />
-          <ImpactCard title="CO2 Offset" value={`${impactData.co2Offset} kg`} icon={Leaf} />
+          <ImpactCard title="CO₂ Tracked" value={`${impactData.co2Offset * 2} kg`} icon={Leaf} />
+          <ImpactCard title="Activities Logged" value={impactData.reportsSubmitted.toString()} icon={MapPin} />
+          <ImpactCard title="Eco Actions" value={impactData.tokensEarned.toString()} icon={Coins} />
+          <ImpactCard title="Waste Recycled" value={`${impactData.wasteCollected} kg`} icon={Recycle} />
         </div>
       </section>
 
