@@ -1,18 +1,29 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher([
-  '/',
-  '/report',
-  '/collect',
-  '/rewards', 
-  '/leaderboard',
+  '/landing',
   '/sign-in(.*)',
-  '/sign-up(.*)'
+  '/sign-up(.*)',
+  '/api/vapi(.*)',
 ])
 
+const isLandingPage = createRouteMatcher(['/landing'])
+
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect()
+  const { userId } = await auth()
+  const url = req.nextUrl.clone()
+  
+  // If user is NOT logged in and trying to access protected routes, redirect to landing
+  if (!userId && !isPublicRoute(req)) {
+    url.pathname = '/landing'
+    return NextResponse.redirect(url)
+  }
+  
+  // If user IS logged in and on landing page, redirect to home
+  if (userId && isLandingPage(req)) {
+    url.pathname = '/'
+    return NextResponse.redirect(url)
   }
 })
 

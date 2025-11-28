@@ -4,6 +4,19 @@
 
 EcoTrack is a camera-first Next.js application that helps students track their daily carbon footprint by simply photographing shopping receipts. AI analyzes purchases, calculates emissions, provides personalized tips, and enables campus competitions—making sustainability beginner-friendly and visually engaging.
 
+## ✨ Immersive Three.js Landing Page (NEW!)
+
+EcoTrack features a stunning WebGL-powered landing page that creates a memorable first impression:
+
+- **3D Particle System** - Thousands of glowing particles in eco-friendly colors (green, cyan, blue, purple) react to mouse movement
+- **Floating Wireframe Shapes** - Geometric shapes (icosahedrons, octahedrons, tetrahedrons) rotate and float dynamically
+- **Custom Cursor** - Unique cursor design with outer ring and inner dot that scales on hover
+- **Mouse Repulsion** - Particles scatter as your cursor moves through them
+- **Gradient Background** - Dynamic shader-based background with subtle color shifts
+- **Smooth Animations** - Fade-in effects, button shine animations, and pulsing elements
+
+The landing page serves as the entry point for unauthenticated users, providing a visually captivating introduction to EcoTrack before sign-in.
+
 ## 🌟 Core Features
 
 ### 🎤 Voice AI Assistant (NEW!)
@@ -163,6 +176,7 @@ EcoTrack uses scientifically-backed emission factors:
 ## 🎓 Perfect for Hackathons
 
 EcoTrack demonstrates:
+- ✅ **3D Graphics (Three.js)** - Immersive WebGL landing page with particle systems
 - ✅ **Voice AI Integration** - VAPI for conversational carbon tracking
 - ✅ **AI/ML Integration** - Google Gemini for OCR and categorization
 - ✅ **Computer Vision** - Receipt image processing
@@ -171,14 +185,16 @@ EcoTrack demonstrates:
 - ✅ **Gamification** - Points, streaks, campus competitions
 - ✅ **Full-Stack Development** - Next.js, PostgreSQL, Clerk auth
 - ✅ **Natural Language Processing** - Voice commands parsed to structured data
+- ✅ **WebGL Shaders** - Custom GLSL shaders for particle effects
 
 ## 🏗️ Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
+- **3D Graphics**: Three.js with custom GLSL shaders
 - **Styling**: Tailwind CSS  
 - **Authentication**: Clerk
 - **Database**: PostgreSQL (Neon) with Drizzle ORM
-- **AI**: Google Gemini 2.5 Flash for OCR and analysis
+- **AI**: Google Gemini 2.0 Flash for OCR and analysis
 - **Voice AI**: VAPI for conversational carbon tracking
 - **Voice Provider**: ElevenLabs for natural speech synthesis
 - **Transcription**: Deepgram Nova-2 for accurate voice recognition
@@ -189,7 +205,9 @@ EcoTrack demonstrates:
 ```
 ecotrack/
 ├── app/
+│   ├── landing/         # ✨ Three.js WebGL landing page
 │   ├── scan/            # 📸 Smart Receipt Scanner
+│   ├── voice/           # 🎤 Full-screen voice assistant
 │   ├── history/         # 📊 Scan history and insights
 │   ├── carbon/          # 🔧 Manual activity logging
 │   ├── leaderboard/     # 🏆 Individual & campus rankings
@@ -197,11 +215,14 @@ ecotrack/
 │   └── settings/        # ⚙️ Campus group selection
 ├── lib/
 │   ├── receiptAnalysis.ts   # AI OCR and carbon calculations
-│   └── carbonCalculations.ts # Emission factors utilities
+│   ├── carbonCalculations.ts # Emission factors utilities
+│   └── vapi-config.ts       # Voice AI assistant configuration
 ├── utils/db/
 │   ├── schema.ts        # Database schema (receipts, groups, profiles)
 │   └── actions.tsx      # Server actions for data operations
-└── components/          # Reusable UI components
+└── components/
+    ├── VoiceAssistant.tsx   # Floating voice mic button
+    └── ...                  # Other UI components
 ```
 
 ## 🎯 Key Differentiators

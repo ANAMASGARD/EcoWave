@@ -1,345 +1,314 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Mic, MicOff, Volume2, X, Loader2, Sparkles } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Mic, MicOff, Volume2, X, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'react-hot-toast';
 
-// Dynamic import for Vapi to avoid SSR issues
-let Vapi: any = null;
-if (typeof window !== 'undefined') {
-  import('@vapi-ai/web').then((module) => {
-    Vapi = module.default;
-  });
-}
-
-interface VoiceAssistantProps {
-  userId?: number;
-}
-
-export default function VoiceAssistant({ userId }: VoiceAssistantProps) {
-  const { user: clerkUser, isLoaded } = useUser();
+export default function VoiceAssistant() {
+  const { isLoaded } = useUser();
   const [vapi, setVapi] = useState<any>(null);
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [lastResponse, setLastResponse] = useState('');
+  const [assistantMessage, setAssistantMessage] = useState('');
   const [showPanel, setShowPanel] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [volumeLevel, setVolumeLevel] = useState(0);
 
   // Initialize VAPI
   useEffect(() => {
+    let vapiInstance: any = null;
+    
     const initVapi = async () => {
       if (typeof window === 'undefined') return;
       
       const publicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
-      
       if (!publicKey) {
-        console.warn('VAPI public key not configured');
+        console.warn('VAPI public key not set');
         return;
       }
 
       try {
-        const VapiModule = (await import('@vapi-ai/web')).default;
-        const vapiInstance = new VapiModule(publicKey);
+        const Vapi = (await import('@vapi-ai/web')).default;
+        vapiInstance = new Vapi(publicKey);
         
-        // Event listeners
+        // Call started successfully
         vapiInstance.on('call-start', () => {
+          console.log('✅ Call started!');
           setIsActive(true);
           setIsConnecting(false);
-          setShowPanel(true);
           setError(null);
-          toast.success('Voice assistant activated! 🎤');
+          toast.success('Connected! Start speaking 🎤');
         });
 
+        // Call ended
         vapiInstance.on('call-end', () => {
+          console.log('📞 Call ended');
           setIsActive(false);
           setIsConnecting(false);
           setIsSpeaking(false);
-          setIsListening(false);
           setTranscript('');
+          setAssistantMessage('');
+          setVolumeLevel(0);
         });
 
+        // Assistant started speaking
         vapiInstance.on('speech-start', () => {
+          console.log('🔊 Assistant speaking');
           setIsSpeaking(true);
-          setIsListening(false);
         });
 
+        // Assistant stopped speaking
         vapiInstance.on('speech-end', () => {
+          console.log('🔇 Assistant stopped');
           setIsSpeaking(false);
         });
 
+        // Volume level (for visual feedback)
         vapiInstance.on('volume-level', (level: number) => {
-          // Could use this for visual feedback
+          setVolumeLevel(level);
         });
 
-        vapiInstance.on('message', (message: any) => {
-          console.log('VAPI message:', message);
+        // Messages (transcripts)
+        vapiInstance.on('message', (msg: any) => {
+          console.log('📨 Message:', msg.type, msg);
           
-          if (message.type === 'transcript') {
-            if (message.role === 'user') {
-              setTranscript(message.transcript);
-              setIsListening(true);
-            } else if (message.role === 'assistant') {
-              setLastResponse(message.transcript);
+          if (msg.type === 'transcript') {
+            if (msg.role === 'user') {
+              setTranscript(msg.transcript || '');
+            } else if (msg.role === 'assistant') {
+              setAssistantMessage(msg.transcript || '');
             }
           }
           
-          if (message.type === 'function-call') {
-            console.log('Function called:', message.functionCall);
-          }
-          
-          if (message.type === 'function-call-result') {
-            console.log('Function result:', message.result);
+          // Handle conversation updates
+          if (msg.type === 'conversation-update') {
+            const lastMessage = msg.conversation?.[msg.conversation.length - 1];
+            if (lastMessage?.role === 'assistant') {
+              setAssistantMessage(lastMessage.content || '');
+            }
           }
         });
 
-        vapiInstance.on('error', (error: any) => {
-          console.error('VAPI Error:', error);
-          setError(error.message || 'Voice connection error');
+        // Error handling
+        vapiInstance.on('error', (err: any) => {
+          console.error('❌ VAPI Error:', err);
+          
+          let errorMsg = 'Connection error';
+          if (typeof err === 'string') {
+            errorMsg = err;
+          } else if (err?.errorMessage) {
+            errorMsg = err.errorMessage;
+          } else if (err?.message) {
+            errorMsg = err.message;
+          } else if (err?.error?.message) {
+            errorMsg = err.error.message;
+          }
+          
+          // Make error messages user-friendly
+          if (errorMsg.includes('ejection') || errorMsg.includes('ended')) {
+            errorMsg = 'Call ended. Try again or check VAPI dashboard.';
+          }
+          
+          setError(errorMsg);
           setIsConnecting(false);
-          toast.error('Voice assistant error. Please try again.');
+          setIsActive(false);
+          toast.error(errorMsg);
         });
 
         setVapi(vapiInstance);
+        console.log('✅ VAPI SDK initialized');
+        
       } catch (err) {
-        console.error('Failed to initialize VAPI:', err);
+        console.error('Failed to init VAPI:', err);
       }
     };
 
     initVapi();
 
     return () => {
-      if (vapi) {
-        vapi.stop();
+      if (vapiInstance) {
+        try {
+          vapiInstance.stop();
+        } catch (e) {}
       }
     };
   }, []);
 
-  const toggleVoiceAssistant = useCallback(async () => {
+  const startCall = useCallback(async () => {
     if (!vapi) {
-      toast.error('Voice assistant not ready. Please wait...');
+      toast.error('Voice assistant loading...');
       return;
     }
 
-    if (isActive) {
-      vapi.stop();
-      setShowPanel(false);
-    } else {
-      setIsConnecting(true);
-      setError(null);
+    setIsConnecting(true);
+    setError(null);
+    setShowPanel(true);
+    setTranscript('');
+    setAssistantMessage('');
+
+    try {
+      // Request microphone permission first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+      
+      if (!assistantId) {
+        throw new Error('Assistant ID not configured');
+      }
+      
+      console.log('🚀 Starting call with assistant:', assistantId);
+      
+      // Start the call with just the assistant ID
+      // All configuration is in VAPI dashboard
+      await vapi.start(assistantId);
+      
+    } catch (err: any) {
+      console.error('Start error:', err);
+      setIsConnecting(false);
+      
+      let errorMsg = 'Could not start';
+      if (err.name === 'NotAllowedError') {
+        errorMsg = 'Microphone blocked. Enable in browser settings.';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      setError(errorMsg);
+      toast.error(errorMsg);
+    }
+  }, [vapi]);
+
+  const endCall = useCallback(() => {
+    if (vapi) {
       try {
-        const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
-        
-        if (assistantId) {
-          // Use pre-configured assistant from VAPI dashboard
-          await vapi.start(assistantId);
-        } else {
-          // Use inline configuration with simpler setup
-          const assistantConfig = {
-            name: "Eco",
-            firstMessage: "Hey! I'm Eco, your sustainability buddy. Tell me about your day - any car rides, meals, or purchases you want to track?",
-            transcriber: {
-              provider: "deepgram",
-              model: "nova-2",
-              language: "en",
-            },
-            model: {
-              provider: "openai",
-              model: "gpt-4o-mini",
-              temperature: 0.7,
-              messages: [
-                {
-                  role: "system",
-                  content: `You are EcoTrack's friendly AI sustainability coach named Eco. Help students log their carbon footprint activities naturally.
-
-When a user mentions an activity (driving, eating, buying), acknowledge it, calculate the CO2, and confirm logging.
-
-Emission factors:
-- Car: 192g CO2 per km
-- Bus: 89g CO2 per km
-- Train: 41g CO2 per km  
-- Bike/Walk: 0g
-- Beef meal: 3500g CO2
-- Chicken meal: 1500g CO2
-- Vegetarian meal: 500g CO2
-- New clothing: 5000g CO2 per item
-
-Be friendly, encouraging, and concise (under 30 seconds). Use analogies. Never be preachy.
-
-Example: User: "I drove 10km today"
-You: "Got it! 10km by car is about 1.9kg of CO2 - like charging your phone 200 times! Taking the bus saves about 1kg. Keep tracking!"`
-                }
-              ],
-            },
-            voice: {
-              provider: "playht",
-              voiceId: "jennifer",
-            },
-          };
-
-          console.log('Starting VAPI with inline config');
-          await vapi.start(assistantConfig);
-        }
-      } catch (error: any) {
-        console.error('Failed to start voice assistant:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        setIsConnecting(false);
-        setError(error.message || 'Failed to connect');
-        
-        if (error.message?.includes('microphone')) {
-          toast.error('Microphone access denied. Please allow permissions.');
-        } else {
-          toast.error('Could not start voice assistant. Please try again.');
-        }
+        vapi.stop();
+      } catch (e) {
+        console.error('Stop error:', e);
       }
     }
-  }, [vapi, isActive, userId, clerkUser]);
+    setIsActive(false);
+    setShowPanel(false);
+  }, [vapi]);
 
-  // Don't render if not loaded or no VAPI key
-  if (!isLoaded || typeof window === 'undefined') {
-    return null;
-  }
+  const toggleCall = useCallback(() => {
+    if (isActive) {
+      endCall();
+    } else {
+      startCall();
+    }
+  }, [isActive, startCall, endCall]);
+
+  // Don't render until loaded
+  if (!isLoaded || typeof window === 'undefined') return null;
 
   const publicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
-  if (!publicKey) {
-    return null; // Don't show button if VAPI not configured
-  }
+  const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+  
+  if (!publicKey || !assistantId) return null;
 
   return (
     <>
-      {/* Voice Assistant Panel */}
+      {/* Panel */}
       {showPanel && (
         <div className="fixed bottom-24 right-6 z-50 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          {/* Header */}
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Sparkles className="w-6 h-6" />
-                  {isActive && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-300 rounded-full animate-pulse" />
-                  )}
-                </div>
+                <Sparkles className="w-6 h-6" />
                 <div>
-                  <h3 className="font-semibold">Eco - Voice Assistant</h3>
+                  <h3 className="font-semibold">Eco - Voice AI</h3>
                   <p className="text-xs text-green-100">
-                    {isConnecting ? 'Connecting...' : isActive ? (isSpeaking ? 'Speaking...' : 'Listening...') : 'Tap mic to start'}
+                    {isConnecting ? '🔄 Connecting...' : 
+                     isActive ? (isSpeaking ? '🔊 Speaking...' : '👂 Listening...') : 
+                     '🎤 Ready'}
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  if (isActive) vapi?.stop();
-                  setShowPanel(false);
-                }}
-                className="p-1 hover:bg-white/20 rounded-full transition-colors"
-              >
+              <button onClick={endCall} className="p-1 hover:bg-white/20 rounded-full">
                 <X className="w-5 h-5" />
               </button>
             </div>
+            
+            {/* Volume indicator */}
+            {isActive && (
+              <div className="mt-2 h-1 bg-green-400/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-white transition-all duration-100"
+                  style={{ width: `${Math.min(volumeLevel * 100, 100)}%` }}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Content */}
           <div className="p-4 max-h-64 overflow-y-auto">
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg mb-3 text-sm">
+              <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg mb-3 text-sm flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 {error}
               </div>
             )}
 
-            {/* User transcript */}
             {transcript && (
               <div className="mb-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">You said:</p>
+                <p className="text-xs text-gray-500 mb-1">You:</p>
                 <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-lg text-sm">
                   {transcript}
                 </div>
               </div>
             )}
 
-            {/* Assistant response */}
-            {lastResponse && (
+            {assistantMessage && (
               <div className="mb-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Eco:</p>
+                <p className="text-xs text-gray-500 mb-1">Eco:</p>
                 <div className="bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 p-3 rounded-lg text-sm">
-                  {lastResponse}
+                  {assistantMessage}
                 </div>
               </div>
             )}
 
-            {/* Listening indicator */}
-            {isActive && !transcript && !lastResponse && (
-              <div className="flex items-center justify-center py-6">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div
-                      key={i}
-                      className={`w-1 bg-green-500 rounded-full animate-pulse`}
-                      style={{
-                        height: `${Math.random() * 20 + 10}px`,
-                        animationDelay: `${i * 0.1}s`,
-                      }}
+            {isActive && !transcript && !assistantMessage && !error && (
+              <div className="text-center py-6 text-gray-500">
+                <div className="flex justify-center gap-1 mb-2">
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} 
+                      className={`w-1 rounded-full ${isSpeaking ? 'bg-green-500' : 'bg-blue-500'}`}
+                      style={{ 
+                        height: `${8 + volumeLevel * 20}px`,
+                        transition: 'height 0.1s'
+                      }} 
                     />
                   ))}
                 </div>
-                <p className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                  {isSpeaking ? "I'm speaking..." : "I'm listening..."}
+                <p className="text-sm">{isSpeaking ? 'Eco is speaking...' : 'Listening...'}</p>
+              </div>
+            )}
+
+            {!isActive && !isConnecting && !error && (
+              <div className="text-center py-4 text-gray-500">
+                <p className="text-sm mb-2">Try saying:</p>
+                <p className="text-xs bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-full inline-block">
+                  "I drove 10km today"
                 </p>
               </div>
             )}
-
-            {/* Quick prompts */}
-            {!isActive && !isConnecting && (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Try saying:</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "I drove 10km today",
-                    "Had chicken for lunch",
-                    "How's my day looking?",
-                    "Where am I on leaderboard?"
-                  ].map((prompt, i) => (
-                    <span
-                      key={i}
-                      className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full"
-                    >
-                      "{prompt}"
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer status */}
-          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600">
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              {isActive ? '🎤 Voice-to-carbon logging active' : 'Tap the mic button to start'}
-            </p>
           </div>
         </div>
       )}
 
-      {/* Floating Voice Button */}
+      {/* Floating Button */}
       <button
-        onClick={toggleVoiceAssistant}
+        onClick={toggleCall}
         disabled={isConnecting}
         className={`
-          fixed bottom-6 right-6 z-50
-          w-16 h-16 rounded-full shadow-lg
-          transition-all duration-300 ease-out
-          flex items-center justify-center
-          ${isConnecting ? 'bg-yellow-500 cursor-wait' : ''}
-          ${isActive 
-            ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110 shadow-green-500/30 shadow-xl' 
-            : 'bg-gradient-to-br from-green-600 to-emerald-700 hover:scale-105 hover:shadow-xl'
-          }
+          fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full shadow-lg
+          transition-all duration-300 flex items-center justify-center
+          ${isConnecting ? 'bg-yellow-500 animate-pulse' : 
+            isActive ? 'bg-red-500 hover:bg-red-600 scale-110' : 
+            'bg-gradient-to-br from-green-500 to-emerald-600 hover:scale-105'}
         `}
-        aria-label={isActive ? 'Stop voice assistant' : 'Start voice assistant'}
       >
         {isConnecting ? (
           <Loader2 className="w-8 h-8 text-white animate-spin" />
@@ -349,30 +318,12 @@ You: "Got it! 10km by car is about 1.9kg of CO2 - like charging your phone 200 t
           <Mic className="w-8 h-8 text-white" />
         )}
 
-        {/* Pulsing ring when active */}
-        {isActive && (
-          <>
-            <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-30" />
-            <span className="absolute inset-0 rounded-full bg-green-400 animate-pulse opacity-20" />
-          </>
-        )}
-
-        {/* Speaking indicator */}
+        {isActive && <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-30" />}
+        
         {isSpeaking && (
-          <div className="absolute -top-1 -right-1">
-            <Volume2 className="w-5 h-5 text-white bg-green-500 rounded-full p-0.5 animate-bounce" />
-          </div>
+          <Volume2 className="absolute -top-1 -right-1 w-5 h-5 text-white bg-green-500 rounded-full p-0.5 animate-bounce" />
         )}
       </button>
-
-      {/* Tooltip when not active */}
-      {!isActive && !showPanel && (
-        <div className="fixed bottom-24 right-6 z-40 pointer-events-none">
-          <div className="bg-gray-900 text-white text-sm px-3 py-2 rounded-lg shadow-lg opacity-0 hover-target:opacity-100 transition-opacity">
-            🎤 Talk to Eco
-          </div>
-        </div>
-      )}
     </>
   );
 }
