@@ -1,5 +1,5 @@
 // VAPI Voice AI Assistant Configuration
-// EcoTrack - Voice-Native Carbon Footprint Tracker
+// EcoWave - Voice-Native Carbon Footprint Tracker
 
 // Carbon emission factors for voice activity logging (in grams CO2)
 export const VOICE_EMISSION_FACTORS = {
@@ -66,7 +66,7 @@ export const VOICE_EMISSION_FACTORS = {
 };
 
 // VAPI Assistant System Prompt
-export const VAPI_SYSTEM_PROMPT = `You are EcoTrack's friendly AI sustainability coach and personal companion for students. Your name is Eco.
+export const VAPI_SYSTEM_PROMPT = `You are EcoWave's friendly AI sustainability coach and personal companion for students. Your name is Eco.
 
 ## YOUR PERSONALITY
 - Warm, encouraging, and supportive like a helpful friend

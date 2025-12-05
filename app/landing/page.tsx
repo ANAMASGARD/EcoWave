@@ -357,6 +357,7 @@ export default function LandingPage() {
       ref={containerRef} 
       className="relative w-full h-screen overflow-hidden bg-black"
       style={{ cursor: 'none' }}
+      suppressHydrationWarning
     >
       {/* Three.js Canvas */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
@@ -408,7 +409,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-cyan-500 rounded-full opacity-40 blur-2xl group-hover:opacity-60 group-hover:blur-3xl transition-all duration-500" />
             <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-emerald-500 to-cyan-500 rounded-full animate-spin" style={{ animationDuration: '8s' }} />
             <div className="absolute inset-[3px] bg-black rounded-full flex items-center justify-center group-hover:inset-[2px] transition-all duration-300">
-              <svg className="w-12 h-12 text-green-400 group-hover:text-green-300 group-hover:scale-110 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-12 h-12 text-green-400 group-hover:text-green-300 group-hover:scale-110 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -426,7 +427,7 @@ export default function LandingPage() {
             Eco
           </span>
           <span className="bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent bg-[length:200%_auto] hover:animate-gradient-x transition-all duration-300 inline-block hover:scale-105">
-            Track
+            Wave
           </span>
         </h1>
         
@@ -484,6 +485,7 @@ export default function LandingPage() {
             onClick={handleGetStarted}
             className="relative px-12 md:px-16 py-5 md:py-6 rounded-full text-white text-lg md:text-xl font-bold overflow-hidden transition-all duration-500 group-hover:scale-105"
             style={{ boxShadow: '0 0 40px rgba(34, 197, 94, 0.4)' }}
+            suppressHydrationWarning
           >
             {/* Gradient background */}
             <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" />
@@ -503,7 +505,7 @@ export default function LandingPage() {
             
             <span className="relative z-10 flex items-center gap-3">
               Get Started
-              <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </span>
@@ -541,7 +543,7 @@ export default function LandingPage() {
       
       {/* Corners */}
       <div className="absolute top-6 left-8 text-gray-600 text-xs font-mono tracking-wider z-20 hover:text-gray-400 transition-colors">
-        v2.0 // ECOTRACK
+        v2.0 // ECOWAVE
       </div>
       <div className="absolute top-6 right-8 flex items-center gap-2 z-20">
         <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
