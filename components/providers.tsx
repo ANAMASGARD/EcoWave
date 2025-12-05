@@ -7,7 +7,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       attribute="class"
       defaultTheme="dark"
       enableSystem={false}
-      storageKey="cleanshare-theme"
+      storageKey="ecotrack-theme"
     >
       {children}
     </ThemeProvider>

@@ -7,10 +7,12 @@ import { toast } from 'react-hot-toast';
 import { getUserByEmail, createUser, getOrCreateUserProfile, getDailyCarbonFootprint } from '@/utils/db/actions';
 import { formatCarbonEmission } from '@/lib/carbonCalculations';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type VapiInstance = any;
+
 export default function VoiceAssistantPage() {
   const { user: clerkUser, isLoaded } = useUser();
-  const [user, setUser] = useState<any>(null);
-  const [vapi, setVapi] = useState<any>(null);
+  const [vapi, setVapi] = useState<VapiInstance | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -38,7 +40,6 @@ export default function VoiceAssistantPage() {
       if (!fetchedUser) {
         fetchedUser = await createUser(email, name);
       }
-      setUser(fetchedUser);
 
       if (fetchedUser) {
         await getOrCreateUserProfile(fetchedUser.id);
@@ -51,7 +52,7 @@ export default function VoiceAssistantPage() {
 
   // Initialize VAPI
   useEffect(() => {
-    let vapiInstance: any = null;
+    let vapiInstance: VapiInstance = null;
     
     const initVapi = async () => {
       if (typeof window === 'undefined') return;
@@ -92,19 +93,19 @@ export default function VoiceAssistantPage() {
           setVolumeLevel(level);
         });
 
-        vapiInstance.on('message', (msg: any) => {
+        vapiInstance.on('message', (msg: { type: string; transcriptType?: string; transcript?: string; role?: string; conversation?: Array<{ role: string; content?: string }> }) => {
           console.log('📨', msg.type);
           
           if (msg.type === 'transcript') {
             if (msg.transcriptType === 'final' && msg.transcript) {
               if (msg.role === 'user') {
-                setMessages(prev => [...prev, { role: 'user', text: msg.transcript }]);
+                setMessages(prev => [...prev, { role: 'user' as const, text: msg.transcript! }]);
                 setTranscript('');
               } else if (msg.role === 'assistant') {
-                setMessages(prev => [...prev, { role: 'assistant', text: msg.transcript }]);
+                setMessages(prev => [...prev, { role: 'assistant' as const, text: msg.transcript! }]);
               }
             } else if (msg.transcriptType === 'partial' && msg.role === 'user') {
-              setTranscript(msg.transcript);
+              setTranscript(msg.transcript || '');
             }
           }
           
@@ -119,7 +120,7 @@ export default function VoiceAssistantPage() {
                   return prev;
                 }
                 if (lastPrev?.role !== 'assistant') {
-                  return [...prev, { role: 'assistant', text: lastMsg.content }];
+                  return [...prev, { role: 'assistant' as const, text: lastMsg.content! }];
                 }
                 return prev;
               });
@@ -127,7 +128,7 @@ export default function VoiceAssistantPage() {
           }
         });
 
-        vapiInstance.on('error', (err: any) => {
+        vapiInstance.on('error', (err: { errorMessage?: string; message?: string } | string) => {
           console.error('❌ Error:', err);
           
           let errorMsg = 'Connection error';
@@ -153,7 +154,7 @@ export default function VoiceAssistantPage() {
     };
 
     initVapi();
-    return () => { if (vapiInstance) try { vapiInstance.stop(); } catch(e) {} };
+    return () => { if (vapiInstance) try { vapiInstance.stop(); } catch { /* ignore */ } };
   }, []);
 
   const startCall = useCallback(async () => {
@@ -177,13 +178,15 @@ export default function VoiceAssistantPage() {
       console.log('🚀 Starting:', assistantId);
       await vapi.start(assistantId);
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Start error:', err);
       setIsConnecting(false);
       
       let msg = 'Could not start';
-      if (err.name === 'NotAllowedError') msg = 'Microphone blocked';
-      else if (err.message) msg = err.message;
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') msg = 'Microphone blocked';
+        else msg = err.message;
+      }
       
       setError(msg);
       toast.error(msg);
@@ -191,7 +194,7 @@ export default function VoiceAssistantPage() {
   }, [vapi]);
 
   const endCall = useCallback(() => {
-    if (vapi) try { vapi.stop(); } catch(e) {}
+    if (vapi) try { vapi.stop(); } catch { /* ignore */ }
     setIsActive(false);
   }, [vapi]);
 
@@ -277,7 +280,7 @@ NEXT_PUBLIC_VAPI_ASSISTANT_ID=...`}
           {messages.length === 0 && !isActive && !error ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500">
               <MessageCircle className="h-12 w-12 mb-3 opacity-50" />
-              <p className="text-center">Press the button and say:<br/><span className="text-sm">"I drove 10km today"</span></p>
+              <p className="text-center">Press the button and say:<br/><span className="text-sm">&quot;I drove 10km today&quot;</span></p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -355,7 +358,7 @@ NEXT_PUBLIC_VAPI_ASSISTANT_ID=...`}
           <div className="flex flex-wrap gap-2 justify-center">
             {["I drove 10km", "Had a burger", "Bought a shirt", "How am I doing?"].map((p, i) => (
               <span key={i} className="text-xs bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
-                "{p}"
+                &quot;{p}&quot;
               </span>
             ))}
           </div>

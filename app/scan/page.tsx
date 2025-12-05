@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import { Camera, Upload, Loader, CheckCircle, XCircle, ShoppingBag, Sparkles, TrendingDown } from 'lucide-react'
+import { Camera, Upload, Loader, CheckCircle, ShoppingBag, Sparkles, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'react-hot-toast'
 import { useUser } from '@clerk/nextjs'
@@ -35,7 +35,7 @@ export default function ScanReceiptPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<ReceiptAnalysisResult | null>(null)
   const [insights, setInsights] = useState<string[]>([])
-  const [savings, setSavings] = useState<any[]>([])
+  const [savings, setSavings] = useState<{ category: string; current: number; potential: number; savings: number }[]>([])
 
   // Get or create user - use useEffect instead of useState
   useEffect(() => {

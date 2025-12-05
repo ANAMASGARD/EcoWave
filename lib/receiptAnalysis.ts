@@ -130,8 +130,8 @@ export function parseReceiptAnalysisResponse(responseText: string): ReceiptAnaly
     }
     
     // Calculate carbon for each item
-    const processedItems: ReceiptItem[] = parsed.items.map((item: any) => {
-      const carbonEmission = calculateItemCarbon(item.category, item.quantity || 1);
+    const processedItems: ReceiptItem[] = parsed.items.map((item: { itemName?: string; category?: string; quantity?: number; price?: string; confidence?: number }) => {
+      const carbonEmission = calculateItemCarbon(item.category || 'other', item.quantity || 1);
       return {
         itemName: item.itemName || 'Unknown Item',
         category: item.category || 'other',

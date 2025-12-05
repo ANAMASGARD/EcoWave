@@ -2,17 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/utils/db/dbConfig';
 import { DailyLogs, Users, Rewards, UserProfiles, VoiceConversations } from '@/utils/db/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
-import { VOICE_EMISSION_FACTORS } from '@/lib/vapi-config';
-
-// Helper to get user from email
-async function getUserFromEmail(email: string) {
-  const [user] = await db
-    .select()
-    .from(Users)
-    .where(eq(Users.email, email))
-    .execute();
-  return user;
-}
 
 // Helper to format carbon amount
 function formatCarbon(grams: number): string {
@@ -89,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     // Handle end-of-call report
     if (message.type === 'end-of-call-report') {
-      const { call, summary, transcript, recordingUrl } = message;
+      const { call, summary, transcript } = message;
       const userId = call?.assistantOverrides?.metadata?.userId;
       
       if (userId) {
@@ -117,7 +106,16 @@ export async function POST(req: NextRequest) {
 
 // Function handlers
 
-async function handleLogActivity(userId: number, params: any) {
+interface LogActivityParams {
+  category: string;
+  activityType: string;
+  quantity: number;
+  carbonEmitted: number;
+  unit?: string;
+  description?: string;
+}
+
+async function handleLogActivity(userId: number, params: LogActivityParams) {
   try {
     const { category, activityType, quantity, carbonEmitted, unit, description } = params;
     
@@ -352,7 +350,12 @@ async function handleGetLeaderboard(userId: number) {
   }
 }
 
-async function handleSetReminder(userId: number, params: any) {
+interface SetReminderParams {
+  reminderText: string;
+  timeDescription?: string;
+}
+
+async function handleSetReminder(_userId: number, params: SetReminderParams) {
   const { reminderText, timeDescription } = params;
   
   // For now, just acknowledge the reminder

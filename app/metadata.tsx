@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "CleanShare",
-  description: "AI-powered waste management platform",
+  title: "EcoTrack",
+  description: "AI-powered carbon footprint tracker for students",
 }

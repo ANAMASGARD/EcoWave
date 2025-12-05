@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Mic, MicOff, Volume2, X, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'react-hot-toast';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type VapiInstance = any;
+
 export default function VoiceAssistant() {
   const { isLoaded } = useUser();
-  const [vapi, setVapi] = useState<any>(null);
+  const [vapi, setVapi] = useState<VapiInstance | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -19,7 +22,7 @@ export default function VoiceAssistant() {
 
   // Initialize VAPI
   useEffect(() => {
-    let vapiInstance: any = null;
+    let vapiInstance: VapiInstance = null;
     
     const initVapi = async () => {
       if (typeof window === 'undefined') return;
@@ -72,7 +75,7 @@ export default function VoiceAssistant() {
         });
 
         // Messages (transcripts)
-        vapiInstance.on('message', (msg: any) => {
+        vapiInstance.on('message', (msg: { type: string; role?: string; transcript?: string; conversation?: Array<{ role: string; content?: string }> }) => {
           console.log('📨 Message:', msg.type, msg);
           
           if (msg.type === 'transcript') {
@@ -93,7 +96,7 @@ export default function VoiceAssistant() {
         });
 
         // Error handling
-        vapiInstance.on('error', (err: any) => {
+        vapiInstance.on('error', (err: { errorMessage?: string; message?: string; error?: { message?: string } } | string) => {
           console.error('❌ VAPI Error:', err);
           
           let errorMsg = 'Connection error';
@@ -132,7 +135,7 @@ export default function VoiceAssistant() {
       if (vapiInstance) {
         try {
           vapiInstance.stop();
-        } catch (e) {}
+        } catch { /* ignore */ }
       }
     };
   }, []);
@@ -165,15 +168,17 @@ export default function VoiceAssistant() {
       // All configuration is in VAPI dashboard
       await vapi.start(assistantId);
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Start error:', err);
       setIsConnecting(false);
       
       let errorMsg = 'Could not start';
-      if (err.name === 'NotAllowedError') {
-        errorMsg = 'Microphone blocked. Enable in browser settings.';
-      } else if (err.message) {
-        errorMsg = err.message;
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          errorMsg = 'Microphone blocked. Enable in browser settings.';
+        } else {
+          errorMsg = err.message;
+        }
       }
       
       setError(errorMsg);
@@ -185,9 +190,7 @@ export default function VoiceAssistant() {
     if (vapi) {
       try {
         vapi.stop();
-      } catch (e) {
-        console.error('Stop error:', e);
-      }
+      } catch { /* ignore */ }
     }
     setIsActive(false);
     setShowPanel(false);
@@ -290,7 +293,7 @@ export default function VoiceAssistant() {
               <div className="text-center py-4 text-gray-500">
                 <p className="text-sm mb-2">Try saying:</p>
                 <p className="text-xs bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-full inline-block">
-                  "I drove 10km today"
+                  &quot;I drove 10km today&quot;
                 </p>
               </div>
             )}

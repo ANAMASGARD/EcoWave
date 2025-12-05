@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { User, Mail, Building2, Save, Users as UsersIcon } from 'lucide-react'
+import { User, Mail, Building2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUser } from '@clerk/nextjs'
 import { toast } from 'react-hot-toast'
@@ -49,10 +49,10 @@ export default function SettingsPage() {
         setSettings({
           name: fetchedUser?.name || name,
           email: userEmail,
-          campusGroupId: (fetchedUser as any)?.campusGroupId || null,
+          campusGroupId: (fetchedUser as { campusGroupId?: number | null })?.campusGroupId || null,
           notifications: true,
         })
-        setSelectedGroupId((fetchedUser as any)?.campusGroupId || null)
+        setSelectedGroupId((fetchedUser as { campusGroupId?: number | null })?.campusGroupId || null)
 
         // Fetch campus groups
         const groups = await getAllCampusGroups()

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { Plus, TrendingUp, Leaf, Calendar, Activity, Loader, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
 import { toast } from 'react-hot-toast'
 import { useUser } from '@clerk/nextjs'
 import { 
@@ -52,7 +51,7 @@ export default function CarbonTrackerPage() {
   const [notes, setNotes] = useState<string>('')
   const [todayLogs, setTodayLogs] = useState<DailyLog[]>([])
   const [todayTotal, setTodayTotal] = useState(0)
-  const [weeklyStats, setWeeklyStats] = useState<any>(null)
+  const [weeklyStats, setWeeklyStats] = useState<{ avgDaily: number; daysLogged: number; categoryTotals: Record<string, number> } | null>(null)
   const [aiTips, setAiTips] = useState<string[]>([])
   const [loadingTips, setLoadingTips] = useState(false)
 
@@ -239,7 +238,7 @@ export default function CarbonTrackerPage() {
         <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 p-6 rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-90 mb-1">Today's Footprint</p>
+              <p className="text-sm opacity-90 mb-1">Today&apos;s Footprint</p>
               <p className="text-3xl font-bold">{formatCarbonEmission(todayTotal)}</p>
             </div>
             <Leaf className="h-12 w-12 opacity-80" />
@@ -370,7 +369,7 @@ export default function CarbonTrackerPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 flex items-center">
               <Calendar className="mr-2 h-6 w-6 text-blue-500" />
-              Today's Activities
+              Today&apos;s Activities
             </h2>
             <Button
               onClick={handleGetAITips}
@@ -398,7 +397,7 @@ export default function CarbonTrackerPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-gray-800 dark:text-gray-200">{log.activityName}</p>
-                        {(log as any).source === 'voice' && (
+                        {(log as DailyLog & { source?: string }).source === 'voice' && (
                           <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs rounded-full flex items-center gap-1">
                             🎤 Voice
                           </span>

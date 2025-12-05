@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Clock, ShoppingBag, Loader, TrendingUp, Calendar, Download } from 'lucide-react'
+import { ShoppingBag, Loader, TrendingUp, Calendar } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useUser } from '@clerk/nextjs'
 import { getUserByEmail, createUser, getUserReceiptScans, getReceiptItems, getUserReceiptStats } from '@/utils/db/actions'
@@ -27,11 +27,10 @@ type ReceiptItem = {
 
 export default function HistoryPage() {
   const { user: clerkUser, isLoaded } = useUser()
-  const [user, setUser] = useState<{ id: number; email: string; name: string } | null>(null)
   const [receipts, setReceipts] = useState<ReceiptScan[]>([])
   const [selectedReceipt, setSelectedReceipt] = useState<number | null>(null)
   const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([])
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<{ totalScans: number; totalItems: number; totalCarbon: number; categoryTotals: Record<string, number> } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -48,7 +47,6 @@ export default function HistoryPage() {
           if (!fetchedUser) {
             fetchedUser = await createUser(userEmail, name)
           }
-          setUser(fetchedUser)
 
           if (fetchedUser) {
             const fetchedReceipts = await getUserReceiptScans(fetchedUser.id)
@@ -135,8 +133,8 @@ export default function HistoryPage() {
           </h3>
           <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Object.entries(stats.categoryTotals)
-              .sort((a: any, b: any) => b[1] - a[1])
-              .map(([category, carbon]: [string, any]) => (
+              .sort((a, b) => b[1] - a[1])
+              .map(([category, carbon]) => (
                 <div key={category} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
                   <p className="text-sm text-gray-600 dark:text-gray-400 capitalize mb-1">
                     {category.replace(/-/g, ' ')}

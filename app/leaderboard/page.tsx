@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { getAllRewards, getUserByEmail, createUser, getCampusGroupLeaderboard, getAllCampusGroups } from '@/utils/db/actions'
+import { getAllRewards, getUserByEmail, createUser, getCampusGroupLeaderboard } from '@/utils/db/actions'
 import { Loader, Award, User, Trophy, Crown, Users, Building2, Home } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useUser } from '@clerk/nextjs'

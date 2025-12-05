@@ -123,8 +123,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
           <Link href="/" className="flex items-center">
             <Leaf className="h-6 w-6 md:h-8 md:w-8 text-green-500 mr-1 md:mr-2" />
             <div className="flex flex-col">
-              <span className="font-bold text-base md:text-lg text-gray-800 dark:text-gray-200">CleanShare</span>
-              <span className="text-[8px] md:text-[10px] text-gray-500 dark:text-gray-400 -mt-1">Made By Gaurav 💝</span>
+              <span className="font-bold text-base md:text-lg text-gray-800 dark:text-gray-200">EcoTrack</span>
+              <span className="text-[8px] md:text-[10px] text-gray-500 dark:text-gray-400 -mt-1">Carbon Footprint Tracker 🌱</span>
             </div>
           </Link>
         </div>
